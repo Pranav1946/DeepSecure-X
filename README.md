@@ -1,530 +1,1020 @@
-# 🔐 DeepSecure-X
+\# 🔐 DeepSecure-X
 
-### AI-Powered Multi-Language Static Code Security Scanner
 
-DeepSecure-X is an AI-powered static code security analysis platform designed to detect security vulnerabilities across multiple programming and web languages without executing the submitted code.
 
-It combines **rule-based static analysis, AI-powered security intelligence, vulnerability classification, security scoring, and remediation recommendations** into a unified security scanning platform.
+\### AI-Powered Multi-Language Static Code Security Scanner
 
----
 
-## 🚀 Key Features
 
-* 🔍 **Multi-language static security scanning**
-* 🤖 **AI-powered security analysis**
-* 🛡️ **Vulnerability detection and classification**
-* ⚠️ **Severity-based risk assessment**
-* 📊 **Security score generation**
-* 💡 **Vulnerability explanations**
-* 🔧 **Remediation recommendations**
-* 🔐 **User authentication and protected scan history**
-* 📈 **Security analytics dashboard**
-* 🧾 **Detailed scan results**
-* 🌐 **Automatic programming-language detection**
-* 🐳 **Docker support**
-* ⚡ **FastAPI-based backend**
-* ⚛️ **React + Vite frontend**
+DeepSecure-X is an AI-powered static code security analysis platform designed to detect security vulnerabilities across multiple programming and web languages.
 
----
 
-## 🌐 Supported Languages
 
-DeepSecure-X currently supports **7 languages**:
+It automatically detects the submitted programming language, scans the code without executing it, identifies potential vulnerabilities, assigns severity levels, calculates a security score, and provides explanations with remediation recommendations.
 
-| Language      | Scanner                     |
-| ------------- | --------------------------- |
-| 🐍 Python     | Python Security Scanner     |
-| 🟨 JavaScript | JavaScript Security Scanner |
-| 🇨 C          | C Security Scanner          |
-| ⚙️ C++        | C++ Security Scanner        |
-| ☕ Java        | Java Security Scanner       |
-| 🌐 HTML       | HTML Security Scanner       |
-| 🎨 CSS        | CSS Security Scanner        |
 
-The platform automatically detects the submitted language and routes the code to the appropriate security scanner.
 
----
+\---
 
-## 🧠 How DeepSecure-X Works
 
-```text
-                 ┌──────────────────────┐
-                 │      User / Client   │
-                 └──────────┬───────────┘
-                            │
-                            ▼
-                 ┌──────────────────────┐
-                 │    React Frontend    │
-                 │      + Vite          │
-                 └──────────┬───────────┘
-                            │
-                            ▼
-                 ┌──────────────────────┐
-                 │     FastAPI API      │
-                 └──────────┬───────────┘
-                            │
-                            ▼
-                 ┌──────────────────────┐
-                 │ Language Detection   │
-                 └──────────┬───────────┘
-                            │
-             ┌──────────────┼──────────────┐
-             ▼              ▼              ▼
-        ┌─────────┐    ┌─────────┐    ┌─────────┐
-        │ Python  │    │   Web   │    │ C/C++/  │
-        │ Scanner │    │Scanner  │    │  Java   │
-        └────┬────┘    └────┬────┘    └────┬────┘
-             │              │              │
-             └──────────────┼──────────────┘
-                            ▼
-                 ┌──────────────────────┐
-                 │ Vulnerability        │
-                 │ Detection & Analysis │
-                 └──────────┬───────────┘
-                            │
-                            ▼
-                 ┌──────────────────────┐
-                 │ AI Security          │
-                 │ Intelligence         │
-                 └──────────┬───────────┘
-                            │
-                            ▼
-                 ┌──────────────────────┐
-                 │ Severity + Score +   │
-                 │ Explanation + Fix    │
-                 └──────────┬───────────┘
-                            │
-                            ▼
-                 ┌──────────────────────┐
-                 │ Dashboard / Results  │
-                 └──────────────────────┘
-```
 
----
+\## 🚀 Key Features
 
-## 🔐 Security Analysis
 
-DeepSecure-X performs **static analysis**, meaning submitted source code is analyzed without executing it.
 
-The scanners identify potentially dangerous patterns such as:
+\* 🔍 \*\*Multi-Language Static Code Analysis\*\*
 
-* Dangerous function usage
-* Command injection risks
-* Cross-Site Scripting (XSS)
-* Unsafe code execution
-* Insecure input handling
-* Security-sensitive coding patterns
-* Language-specific vulnerabilities
+\* 🤖 \*\*AI-Powered Security Intelligence\*\*
 
-Each detected issue can be classified according to its security impact.
+\* 🛡️ \*\*Vulnerability Detection\*\*
 
-### Severity Levels
+\* ⚠️ \*\*Severity Classification\*\*
+
+\* 📊 \*\*Security Score Calculation\*\*
+
+\* 💡 \*\*Vulnerability Explanation\*\*
+
+\* 🔧 \*\*Remediation Recommendations\*\*
+
+\* 🔐 \*\*User Authentication\*\*
+
+\* 📜 \*\*User-Specific Scan History\*\*
+
+\* 📈 \*\*Security Analytics Dashboard\*\*
+
+\* 🌐 \*\*Automatic Language Detection\*\*
+
+\* 🐳 \*\*Docker Support\*\*
+
+\* ⚡ \*\*FastAPI Backend\*\*
+
+\* ⚛️ \*\*React + Vite Frontend\*\*
+
+
+
+\---
+
+
+
+\## 🌐 Supported Languages
+
+
+
+| Language      | Detection | Static Security Scanner |
+
+| ------------- | --------- | ----------------------- |
+
+| 🐍 Python     | ✅         | ✅                       |
+
+| 🟨 JavaScript | ✅         | ✅                       |
+
+| 🔵 C          | ✅         | ✅                       |
+
+| 🟣 C++        | ✅         | ✅                       |
+
+| ☕ Java        | ✅         | ✅                       |
+
+| 🌐 HTML       | ✅         | ✅                       |
+
+| 🎨 CSS        | ✅         | ✅                       |
+
+
+
+> DeepSecure-X performs static analysis only. Submitted code is \*\*not executed\*\* during security scanning.
+
+
+
+\---
+
+
+
+\## 🏗️ System Architecture
+
+
 
 ```text
-CRITICAL
-HIGH
-MEDIUM
-LOW
+
+&#x20;                   ┌──────────────────────┐
+
+&#x20;                   │      React UI        │
+
+&#x20;                   │    React + Vite      │
+
+&#x20;                   └──────────┬───────────┘
+
+&#x20;                              │
+
+&#x20;                              ▼
+
+&#x20;                   ┌──────────────────────┐
+
+&#x20;                   │    FastAPI Backend   │
+
+&#x20;                   │   REST API Layer      │
+
+&#x20;                   └──────────┬───────────┘
+
+&#x20;                              │
+
+&#x20;                ┌─────────────┴─────────────┐
+
+&#x20;                │                           │
+
+&#x20;                ▼                           ▼
+
+&#x20;       ┌─────────────────┐        ┌─────────────────┐
+
+&#x20;       │ Language        │        │ Authentication  │
+
+&#x20;       │ Detection       │        │ \& User System   │
+
+&#x20;       └────────┬────────┘        └─────────────────┘
+
+&#x20;                │
+
+&#x20;                ▼
+
+&#x20;       ┌─────────────────────────┐
+
+&#x20;       │ Multi-Language Scanner  │
+
+&#x20;       ├─────────────────────────┤
+
+&#x20;       │ Python                  │
+
+&#x20;       │ JavaScript              │
+
+&#x20;       │ C                       │
+
+&#x20;       │ C++                     │
+
+&#x20;       │ Java                    │
+
+&#x20;       │ HTML                    │
+
+&#x20;       │ CSS                     │
+
+&#x20;       └────────────┬────────────┘
+
+&#x20;                    │
+
+&#x20;                    ▼
+
+&#x20;       ┌─────────────────────────┐
+
+&#x20;       │ Security Analysis       │
+
+&#x20;       │                         │
+
+&#x20;       │ • Vulnerability         │
+
+&#x20;       │ • Severity              │
+
+&#x20;       │ • Security Score        │
+
+&#x20;       │ • Explanation           │
+
+&#x20;       │ • Remediation           │
+
+&#x20;       └────────────┬────────────┘
+
+&#x20;                    │
+
+&#x20;                    ▼
+
+&#x20;       ┌─────────────────────────┐
+
+&#x20;       │ AI Security Intelligence│
+
+&#x20;       └────────────┬────────────┘
+
+&#x20;                    │
+
+&#x20;                    ▼
+
+&#x20;       ┌─────────────────────────┐
+
+&#x20;       │ Scan History \& Analytics│
+
+&#x20;       └─────────────────────────┘
+
 ```
 
----
 
-## 📊 Security Scoring
 
-DeepSecure-X generates a security score based on detected vulnerabilities.
+\---
+
+
+
+\## 🛡️ Security Analysis
+
+
+
+DeepSecure-X identifies potentially dangerous coding patterns and security weaknesses using language-specific security rules and analysis pipelines.
+
+
+
+\### Severity Levels
+
+
+
+| Severity         | Description                                                  |
+
+| ---------------- | ------------------------------------------------------------ |
+
+| 🔴 Critical      | Highly dangerous vulnerability requiring immediate attention |
+
+| 🟠 High          | Significant security risk                                    |
+
+| 🟡 Medium        | Moderate security concern                                    |
+
+| 🔵 Low           | Lower-risk security issue                                    |
+
+| 🟢 Informational | Security-related observation                                 |
+
+
+
+\---
+
+
+
+\## 📊 Security Scoring
+
+
+
+Each scan generates an overall security score based on the vulnerabilities detected.
+
+
 
 Example:
 
+
+
 ```text
+
 Security Score: 70 / 100
-Risk Level: CRITICAL
 
-Detected Vulnerability:
-DANGEROUS_EVAL
+Risk Level: Critical
 
-Severity:
-CRITICAL
 ```
 
-The dashboard provides users with a quick overview of the security posture of their submitted code.
 
----
 
-## 🤖 AI Security Intelligence
+The score helps developers quickly understand the overall security posture of their submitted code.
 
-DeepSecure-X integrates AI-based analysis to enhance the security scanning workflow.
 
-The AI analysis layer can provide:
 
-* Vulnerability explanations
-* Security context
-* Risk interpretation
-* Remediation guidance
-* Developer-friendly recommendations
+\---
 
-This helps developers understand **why a piece of code is potentially insecure and how it can be improved**.
 
----
 
-## 🔐 Authentication & Scan History
+\## 🤖 AI Security Intelligence
 
-DeepSecure-X includes authenticated user workflows.
 
-Users can:
 
-* Register an account
-* Log in securely
-* Reset passwords
-* Submit security scans
-* View previous scans
-* View detailed scan results
-* Access security analytics
+DeepSecure-X integrates AI-assisted security analysis to improve the understanding of detected vulnerabilities.
 
-Scan history is isolated between users so that one user cannot access another user's scans.
 
----
 
-## 🖥️ Frontend
+The AI analysis can provide:
 
-The frontend is built using:
 
-* React
-* Vite
-* React Router
-* Axios
-* Recharts
-* Lucide React
-* CSS
 
-### Frontend Pages
+\* Vulnerability explanations
+
+\* Security impact
+
+\* Risk interpretation
+
+\* Recommended remediation
+
+\* Secure coding guidance
+
+
+
+This allows developers to understand \*\*why a piece of code is vulnerable and how it can be improved\*\*.
+
+
+
+\---
+
+
+
+\## 🔐 Authentication \& Scan History
+
+
+
+DeepSecure-X includes a user authentication system with protected scan history.
+
+
+
+Each authenticated user can:
+
+
+
+\* Create an account
+
+\* Log in securely
+
+\* Perform security scans
+
+\* View previous scans
+
+\* View scan details
+
+\* Track security scores
+
+\* Access personal analytics
+
+
+
+Scan history is isolated between users to prevent unauthorized access to another user's scan data.
+
+
+
+\---
+
+
+
+\## 📈 Analytics Dashboard
+
+
+
+The dashboard provides an overview of security analysis activity.
+
+
+
+It can display information such as:
+
+
+
+\* Total scans
+
+\* Security scores
+
+\* Vulnerability counts
+
+\* Severity distribution
+
+\* Scan history
+
+\* Security trends
+
+
+
+\---
+
+
+
+\## 🧪 Example Security Results
+
+
+
+The following are example results from the language-specific scanners:
+
+
+
+| Language   | Vulnerability  | Severity | Score |
+
+| ---------- | -------------- | -------: | ----: |
+
+| Python     | DANGEROUS\_EVAL | Critical |    70 |
+
+| JavaScript | JS001          |     High |    82 |
+
+| C          | C-001          | Critical |    70 |
+
+| C++        | CPP-002        | Critical |    70 |
+
+| Java       | JAVA-CMD-001   | Critical |    70 |
+
+| HTML       | HTML-XSS-001   |     High |    82 |
+
+| CSS        | CSS-001        |     High |    82 |
+
+
+
+\---
+
+
+
+\## 🧰 Tech Stack
+
+
+
+\### Backend
+
+
+
+\* Python
+
+\* FastAPI
+
+\* SQLAlchemy
+
+\* SQLite
+
+\* Pydantic
+
+\* JWT Authentication
+
+\* Uvicorn
+
+
+
+\### Frontend
+
+
+
+\* React
+
+\* Vite
+
+\* JavaScript
+
+\* Axios
+
+\* React Router
+
+\* Recharts
+
+\* Lucide React
+
+
+
+\### AI \& Security
+
+
+
+\* AI-assisted security analysis
+
+\* Static code analysis
+
+\* Vulnerability detection
+
+\* Severity classification
+
+\* Security scoring
+
+\* Remediation recommendations
+
+
+
+\### DevOps
+
+
+
+\* Docker
+
+\* Docker Compose
+
+\* Nginx
+
+\* Git
+
+\* GitHub
+
+
+
+\---
+
+
+
+\## 📂 Project Structure
+
+
 
 ```text
-Login
-Register
-Forgot Password
-Reset Password
-Dashboard
-Scanner
-Scan Details
-Analytics
-```
 
----
-
-## ⚙️ Backend
-
-The backend is built using **FastAPI** and provides APIs for:
-
-* Authentication
-* User management
-* Code scanning
-* Scan history
-* Scan details
-* AI security analysis
-* Security analytics
-
----
-
-## 🛠️ Technology Stack
-
-### Backend
-
-```text
-Python
-FastAPI
-SQLAlchemy
-SQLite / PostgreSQL
-Pydantic
-JWT Authentication
-OpenAI API
-```
-
-### Frontend
-
-```text
-React
-Vite
-JavaScript
-Axios
-React Router
-Recharts
-Lucide React
-CSS
-```
-
-### DevOps
-
-```text
-Docker
-Docker Compose
-Nginx
-Git
-GitHub
-```
-
----
-
-## 📂 Project Structure
-
-```text
 DeepSecure-X/
+
 │
+
 ├── app/
+
 │   ├── api/
+
 │   │   ├── ai.py
+
 │   │   ├── auth.py
+
 │   │   └── scanner.py
+
 │   │
+
 │   ├── core/
+
 │   │   ├── database.py
+
 │   │   └── security.py
+
 │   │
+
 │   ├── scanner/
-│   │   ├── __init__.py
-│   │   ├── c_scanner.py
-│   │   ├── cpp_scanner.py
-│   │   ├── css_scanner.py
-│   │   ├── html_scanner.py
-│   │   ├── java_scanner.py
-│   │   ├── javascript_scanner.py
-│   │   └── ...
+
+│   │   ├── \_\_init\_\_.py
+
+│   │   ├── c\_scanner.py
+
+│   │   ├── cpp\_scanner.py
+
+│   │   ├── css\_scanner.py
+
+│   │   ├── html\_scanner.py
+
+│   │   ├── java\_scanner.py
+
+│   │   └── javascript\_scanner.py
+
 │   │
+
 │   ├── services/
-│   │   └── ai_analysis.py
+
+│   │   └── ai\_analysis.py
+
 │   │
-│   ├── schemas/
+
 │   ├── dependencies.py
+
 │   └── main.py
+
 │
+
 ├── frontend/
+
 │   ├── src/
-│   │   ├── components/
+
 │   │   ├── pages/
-│   │   ├── services/
-│   │   ├── App.jsx
-│   │   └── ...
+
+│   │   ├── components/
+
+│   │   └── styles/
+
 │   │
-│   ├── Dockerfile
-│   ├── nginx.conf
+
 │   ├── package.json
-│   └── .env.example
+
+│   ├── Dockerfile
+
+│   └── nginx.conf
+
 │
+
 ├── tests/
-│   ├── test_api.py
-│   └── test_scanner.py
+
+│   ├── test\_api.py
+
+│   └── test\_scanner.py
+
 │
+
+├── data/
+
 ├── Dockerfile
+
 ├── docker-compose.yml
+
 ├── requirements.txt
+
 ├── .env.example
+
 ├── .gitignore
+
 └── README.md
+
 ```
 
----
 
-## ⚙️ Local Installation
 
-### 1. Clone the repository
+\---
+
+
+
+\## ⚙️ Installation
+
+
+
+\### 1. Clone the Repository
+
+
 
 ```bash
+
 git clone https://github.com/Pranav1946/DeepSecure-X.git
+
 cd DeepSecure-X
+
 ```
 
-### 2. Create a Python virtual environment
 
-Windows:
+
+\### 2. Create a Virtual Environment
+
+
+
+\#### Windows
+
+
 
 ```powershell
+
 python -m venv .venv
-.venv\Scripts\activate
+
+.venv\\Scripts\\activate
+
 ```
 
-Linux / macOS:
+
+
+\#### Linux / macOS
+
+
 
 ```bash
+
 python3 -m venv .venv
+
 source .venv/bin/activate
+
 ```
 
-### 3. Install backend dependencies
+
+
+\### 3. Install Backend Dependencies
+
+
 
 ```bash
+
 pip install -r requirements.txt
+
 ```
 
-### 4. Configure environment variables
 
-Create a `.env` file from the example:
 
-```powershell
-Copy-Item .env.example .env
-```
+\### 4. Configure Environment Variables
 
-Configure your environment variables:
+
+
+Create a `.env` file based on `.env.example`.
+
+
 
 ```env
+
 ENVIRONMENT=development
-DATABASE_URL=sqlite+aiosqlite:///./deepsecure.db
-SECRET_KEY=your_secure_secret_key
-OPENAI_API_KEY=your_openai_api_key
-OPENAI_MODEL=gpt-4o-mini
-CORS_ORIGINS=http://localhost:5173
+
+DATABASE\_URL=sqlite+aiosqlite:///./deepsecure.db
+
+SECRET\_KEY=your\_secret\_key
+
+OPENAI\_API\_KEY=your\_openai\_api\_key
+
 ```
 
-> **Never commit your `.env` file or API keys to GitHub.**
 
----
 
-## ▶️ Run the Backend
+> Never commit the real `.env` file or API keys to GitHub.
+
+
+
+\---
+
+
+
+\## ▶️ Running the Backend
+
+
 
 Start the FastAPI server:
 
+
+
 ```bash
+
 uvicorn app.main:app --reload
+
 ```
+
+
 
 Backend:
 
+
+
 ```text
+
 http://127.0.0.1:8000
+
 ```
+
+
 
 API documentation:
 
+
+
 ```text
+
 http://127.0.0.1:8000/docs
+
 ```
 
----
 
-## ▶️ Run the Frontend
 
-Open another terminal:
+\---
+
+
+
+\## ▶️ Running the Frontend
+
+
+
+Open a new terminal:
+
+
 
 ```powershell
+
 cd frontend
+
 npm install
+
 npm run dev
+
 ```
+
+
 
 Frontend:
 
+
+
 ```text
+
 http://localhost:5173
+
 ```
 
-Configure the frontend API URL using:
 
-```env
-VITE_API_URL=http://127.0.0.1:8000
-```
 
----
+\---
 
-## 🐳 Docker
 
-DeepSecure-X also includes Docker configuration for containerized execution.
 
-Build and start the services:
+\## 🐳 Running with Docker
+
+
+
+Build and start the application:
+
+
 
 ```bash
+
 docker compose up --build
+
 ```
 
-Stop the services:
+
+
+Stop the application:
+
+
 
 ```bash
+
 docker compose down
+
 ```
 
----
 
-## 🧪 Testing
 
-Run the backend test suite:
+\---
+
+
+
+\## 🧪 Testing
+
+
+
+Run the complete test suite:
+
+
 
 ```bash
+
 pytest
+
 ```
 
-The project includes API and scanner tests covering:
 
-* Authentication APIs
-* Scanner APIs
-* Language detection
-* Vulnerability detection
-* Security scoring
-* Multi-language scanning workflows
 
----
+The test suite covers:
 
-## 📈 Example Security Results
 
-Example vulnerability detection:
 
-| Language   | Vulnerability  | Severity | Score |
-| ---------- | -------------- | -------: | ----: |
-| Python     | DANGEROUS_EVAL | Critical |    70 |
-| JavaScript | JS001          |     High |    82 |
-| C          | C-001          | Critical |    70 |
-| C++        | CPP-002        | Critical |    70 |
-| Java       | JAVA-CMD-001   | Critical |    70 |
-| HTML       | HTML-XSS-001   |     High |    82 |
-| CSS        | CSS-001        |     High |    82 |
+\* API functionality
 
----
+\* Authentication
 
-## 🎯 Project Goals
+\* Scanner functionality
 
-DeepSecure-X aims to make source-code security analysis more accessible to developers by providing a single platform for analyzing multiple programming and web languages.
+\* Multi-language detection
 
-The project focuses on combining:
+\* Vulnerability detection
+
+\* Security scoring
+
+\* Scan history
+
+\* User isolation
+
+
+
+\---
+
+
+
+\## 🔍 Supported Detection Flow
+
+
+
+DeepSecure-X automatically detects the submitted language.
+
+
 
 ```text
-Static Analysis
-      +
-AI Security Intelligence
-      +
-Vulnerability Classification
-      +
-Security Scoring
-      +
-Remediation Guidance
+
+User submits code
+
+&#x20;       ↓
+
+Language Detection
+
+&#x20;       ↓
+
+Language-specific Scanner
+
+&#x20;       ↓
+
+Vulnerability Detection
+
+&#x20;       ↓
+
+Severity Classification
+
+&#x20;       ↓
+
+Security Score
+
+&#x20;       ↓
+
+AI Security Analysis
+
+&#x20;       ↓
+
+Explanation + Remediation
+
+&#x20;       ↓
+
+Scan Result
+
 ```
 
----
 
-## 🔮 Future Enhancements
 
-* 🌐 Cloud deployment
-* 🗄️ Production PostgreSQL database
-* 📄 PDF security reports
-* 🔄 CI/CD security scanning
-* 🔌 GitHub repository integration
-* 🧩 Additional programming languages
-* 🧠 Advanced AI vulnerability reasoning
-* 📊 Advanced security analytics
-* 🔔 Real-time security notifications
+No manual language selection is required.
 
----
 
-## 👨‍💻 Author
 
-**Pranav Balaji**
+\---
 
-AI / Machine Learning Enthusiast | Python Developer | Security & AI Projects
 
-### Project
 
-**DeepSecure-X — AI-Powered Multi-Language Static Code Security Scanner**
+\## 🎯 Project Goals
 
----
 
-## ⭐ Support
 
-If you find DeepSecure-X useful or interesting, consider giving the repository a ⭐ on GitHub.
+DeepSecure-X aims to provide developers with an accessible security analysis platform that can:
 
-**Repository:**
+
+
+\* Detect common security vulnerabilities early
+
+\* Support multiple programming and web languages
+
+\* Provide understandable security explanations
+
+\* Recommend practical remediation steps
+
+\* Help developers improve secure coding practices
+
+\* Provide a centralized security analysis dashboard
+
+
+
+\---
+
+
+
+\## 🚀 Future Enhancements
+
+
+
+Potential future improvements include:
+
+
+
+\* Additional programming language support
+
+\* Advanced AST-based analysis
+
+\* SAST rule expansion
+
+\* CI/CD integration
+
+\* GitHub repository scanning
+
+\* Pull request security analysis
+
+\* Advanced AI vulnerability reasoning
+
+\* Security report export
+
+\* Cloud deployment
+
+\* Enterprise security dashboards
+
+
+
+\---
+
+
+
+\## 📌 Project Status
+
+
+
+\*\*Current Status: Active Development\*\*
+
+
+
+DeepSecure-X currently supports static security scanning across \*\*7 languages\*\* with authentication, scan history, security scoring, AI-assisted analysis, analytics, and Docker-based deployment support.
+
+
+
+\---
+
+
+
+\## 👨‍💻 Author
+
+
+
+\### Pranav Balaji
+
+
+
+\*\*AI / Machine Learning Enthusiast | Python Developer | Security \& AI Projects\*\*
+
+
+
+DeepSecure-X is developed as a practical project combining:
+
+
+
+\* Artificial Intelligence
+
+\* Machine Learning
+
+\* Cybersecurity
+
+\* Static Code Analysis
+
+\* Full-Stack Development
+
+\* Backend API Development
+
+\* Secure Software Engineering
+
+
+
+\---
+
+
+
+\## ⭐ Support
+
+
+
+If you find \*\*DeepSecure-X\*\* useful or interesting, consider giving the repository a ⭐ on GitHub.
+
+
+
+\*\*Repository:\*\*
+
 https://github.com/Pranav1946/DeepSecure-X
+
+
+
