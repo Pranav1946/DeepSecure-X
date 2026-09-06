@@ -11,7 +11,7 @@ from app.models.user import User
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: AsyncSession = Depends(get_db),
-):
+) -> User:
     token = credentials.credentials
 
     payload = decode_access_token(token)
@@ -25,8 +25,17 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    try:
+        user_id_int = int(user_id)
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid user identification in token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     result = await db.execute(
-        select(User).where(User.id == int(user_id))
+        select(User).where(User.id == user_id_int)
     )
 
     user = result.scalar_one_or_none()
@@ -44,4 +53,4 @@ async def get_current_user(
             detail="User account is inactive",
         )
 
-    return user
+    return user

@@ -1,3 +1,7 @@
+import json
+import os
+from typing import Optional
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -6,69 +10,103 @@ from fastapi import (
     UploadFile,
     status,
 )
-from fastapi.security import HTTPAuthorizationCredentials
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-import json
 
 from app.core.database import get_db
-from app.core.security import security, decode_access_token
+from app.dependencies import get_current_user
 from app.models.scan import Scan
-from app.scanner.python_scanner import PythonSecurityScanner
+from app.models.user import User
+from app.scanner import (
+    EXTENSION_TO_LANGUAGE,
+    SUPPORTED_LANGUAGES,
+    detect_language,
+    get_scanner_for_language,
+    normalize_language,
+)
 from app.scanner.risk_engine import SecurityRiskEngine
-
 
 router = APIRouter(
     prefix="/scanner",
     tags=["Security Scanner"]
 )
 
+MAX_CODE_LENGTH = 500_000  # 500 KB character limit
+MAX_FILE_SIZE = 2 * 1024 * 1024  # 2 MB binary limit
+
 
 class ScanRequest(BaseModel):
-    code: str
+    code: str = Field(..., description="Source code to analyze")
 
 
-async def get_authenticated_user_id(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
-):
-    token = credentials.credentials
-
-    payload = decode_access_token(token)
-
-    user_id = payload.get("sub")
-
-    if not user_id:
+def run_scanner_engine(code: str, language: Optional[str] = None) -> tuple[str, list, str]:
+    """
+    Executes static security analysis as pure data without executing user-submitted code.
+    Returns (canonical_language, findings, status).
+    Raises HTTPException(400) if code is empty, invalid, or language is unsupported.
+    """
+    cleaned_code = code.strip()
+    if not cleaned_code:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
-            headers={"WWW-Authenticate": "Bearer"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Source code cannot be empty."
         )
 
-    return int(user_id)
+    if len(code) > MAX_CODE_LENGTH:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Source code exceeds the maximum allowed length of {MAX_CODE_LENGTH} characters."
+        )
+
+    canonical_lang = normalize_language(language) if language else detect_language(code)
+    if not canonical_lang:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "Language is not supported. Please provide valid Python, JavaScript, C, C++, Java, HTML, or CSS code."
+            )
+        )
+
+    scanner = get_scanner_for_language(canonical_lang)
+    if not scanner:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Language is not supported: '{language}'."
+        )
+
+    result = scanner.scan(code)
+    if result.get("status") == "error":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Analysis error: {result.get('message', 'Failed to scan code')}."
+        )
+
+    return canonical_lang, result.get("findings", []), result.get("status", "completed")
 
 
-@router.post("/python")
-async def scan_python_code(
-    request: ScanRequest,
-    user_id: int = Depends(get_authenticated_user_id),
-    db: AsyncSession = Depends(get_db),
-):
-    scanner = PythonSecurityScanner()
-    result = scanner.scan(request.code)
-    findings = result.get("findings", [])
+async def execute_and_persist_scan(
+    code: str,
+    language: Optional[str] = None,
+    user_id: int = 0,
+    db: AsyncSession = None,
+    filename: Optional[str] = None
+) -> dict:
+    canonical_lang, findings, scan_status = run_scanner_engine(code, language)
     risk_engine = SecurityRiskEngine()
     risk = risk_engine.calculate(findings)
 
+    prior_count_result = await db.execute(
+        select(func.count(Scan.id)).where(Scan.user_id == user_id)
+    )
+    scan_number = (prior_count_result.scalar() or 0) + 1
+
     scan = Scan(
         user_id=user_id,
-        language="python",
-        code=request.code,
-        status=result["status"],
-        vulnerabilities_found=result.get(
-            "vulnerabilities_found",
-            0
-        ),
+        language=canonical_lang,
+        code=code,
+        status=scan_status,
+        vulnerabilities_found=len(findings),
         results=json.dumps({
             "security_score": risk["security_score"],
             "risk_level": risk["risk_level"],
@@ -81,27 +119,344 @@ async def scan_python_code(
     await db.commit()
     await db.refresh(scan)
 
-    return {
+    response_data = {
         "scan_id": scan.id,
+        "scan_number": scan_number,
         "user_id": user_id,
-        "status": result["status"],
-        "language": "python",
-        "vulnerabilities_found": result.get(
-            "vulnerabilities_found",
-            0
-        ),
+        "status": scan_status,
+        "language": canonical_lang,
+        "vulnerabilities_found": len(findings),
         "security_score": risk["security_score"],
         "risk_level": risk["risk_level"],
         "severity_counts": risk["severity_counts"],
         "findings": findings
     }
+    if filename:
+        response_data["filename"] = filename
+
+    return response_data
 
 
-@router.get("/dashboard")
-async def get_dashboard_summary(
-    user_id: int = Depends(get_authenticated_user_id),
+# ==============================================================================
+# Unified Code Scan Endpoint
+# ==============================================================================
+@router.post("/scan")
+async def scan_code_unified(
+    request: ScanRequest,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    return await execute_and_persist_scan(
+        code=request.code,
+        language=None,
+        user_id=current_user.id,
+        db=db
+    )
+
+
+# ==============================================================================
+# Dedicated Language Code Endpoints
+# ==============================================================================
+@router.post("/python")
+async def scan_python_code(
+    request: ScanRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await execute_and_persist_scan(
+        code=request.code,
+        language="python",
+        user_id=current_user.id,
+        db=db
+    )
+
+
+@router.post("/javascript")
+async def scan_javascript_code(
+    request: ScanRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await execute_and_persist_scan(
+        code=request.code,
+        language="javascript",
+        user_id=current_user.id,
+        db=db
+    )
+
+
+@router.post("/c")
+async def scan_c_code(
+    request: ScanRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await execute_and_persist_scan(
+        code=request.code,
+        language="c",
+        user_id=current_user.id,
+        db=db
+    )
+
+
+@router.post("/cpp")
+async def scan_cpp_code(
+    request: ScanRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await execute_and_persist_scan(
+        code=request.code,
+        language="cpp",
+        user_id=current_user.id,
+        db=db
+    )
+
+
+@router.post("/java")
+async def scan_java_code(
+    request: ScanRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await execute_and_persist_scan(
+        code=request.code,
+        language="java",
+        user_id=current_user.id,
+        db=db
+    )
+
+
+@router.post("/html")
+async def scan_html_code(
+    request: ScanRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await execute_and_persist_scan(
+        code=request.code,
+        language="html",
+        user_id=current_user.id,
+        db=db
+    )
+
+
+@router.post("/css")
+async def scan_css_code(
+    request: ScanRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await execute_and_persist_scan(
+        code=request.code,
+        language="css",
+        user_id=current_user.id,
+        db=db
+    )
+
+
+# ==============================================================================
+# File Upload Processing & Endpoints
+# ==============================================================================
+async def process_file_upload(
+    file: UploadFile,
+    expected_language: Optional[str] = None
+) -> tuple[str, str, str]:
+    if not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Filename is missing."
+        )
+
+    # Sanitize basename to prevent directory traversal
+    safe_filename = os.path.basename(file.filename)
+    _, ext = os.path.splitext(safe_filename.lower())
+
+    detected_lang = EXTENSION_TO_LANGUAGE.get(ext)
+    if not detected_lang:
+        supported_exts = ", ".join(sorted(EXTENSION_TO_LANGUAGE.keys()))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported file extension '{ext}'. Supported extensions: {supported_exts}."
+        )
+
+    if expected_language:
+        canonical_expected = normalize_language(expected_language)
+        if detected_lang != canonical_expected:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Uploaded file extension '{ext}' does not match expected language '{expected_language}'."
+            )
+
+    try:
+        content = await file.read()
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unable to read uploaded file."
+        )
+
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File size exceeds maximum limit of {MAX_FILE_SIZE // (1024 * 1024)}MB."
+        )
+
+    try:
+        code = content.decode("utf-8")
+    except UnicodeDecodeError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unable to decode file. Please upload a valid UTF-8 encoded text file."
+        )
+
+    if not code.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded file is empty."
+        )
+
+    return code, detected_lang, safe_filename
+
+
+@router.post("/file")
+async def scan_file_unified(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    code, language, safe_filename = await process_file_upload(file)
+    return await execute_and_persist_scan(
+        code=code,
+        language=language,
+        user_id=current_user.id,
+        db=db,
+        filename=safe_filename
+    )
+
+
+@router.post("/python/file")
+async def scan_python_file(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    code, language, safe_filename = await process_file_upload(file, expected_language="python")
+    return await execute_and_persist_scan(
+        code=code,
+        language=language,
+        user_id=current_user.id,
+        db=db,
+        filename=safe_filename
+    )
+
+
+@router.post("/javascript/file")
+async def scan_javascript_file(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    code, language, safe_filename = await process_file_upload(file, expected_language="javascript")
+    return await execute_and_persist_scan(
+        code=code,
+        language=language,
+        user_id=current_user.id,
+        db=db,
+        filename=safe_filename
+    )
+
+
+@router.post("/c/file")
+async def scan_c_file(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    code, language, safe_filename = await process_file_upload(file, expected_language="c")
+    return await execute_and_persist_scan(
+        code=code,
+        language=language,
+        user_id=current_user.id,
+        db=db,
+        filename=safe_filename
+    )
+
+
+@router.post("/cpp/file")
+async def scan_cpp_file(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    code, language, safe_filename = await process_file_upload(file, expected_language="cpp")
+    return await execute_and_persist_scan(
+        code=code,
+        language=language,
+        user_id=current_user.id,
+        db=db,
+        filename=safe_filename
+    )
+
+
+@router.post("/java/file")
+async def scan_java_file(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    code, language, safe_filename = await process_file_upload(file, expected_language="java")
+    return await execute_and_persist_scan(
+        code=code,
+        language=language,
+        user_id=current_user.id,
+        db=db,
+        filename=safe_filename
+    )
+
+
+@router.post("/html/file")
+async def scan_html_file(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    code, language, safe_filename = await process_file_upload(file, expected_language="html")
+    return await execute_and_persist_scan(
+        code=code,
+        language=language,
+        user_id=current_user.id,
+        db=db,
+        filename=safe_filename
+    )
+
+
+@router.post("/css/file")
+async def scan_css_file(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    code, language, safe_filename = await process_file_upload(file, expected_language="css")
+    return await execute_and_persist_scan(
+        code=code,
+        language=language,
+        user_id=current_user.id,
+        db=db,
+        filename=safe_filename
+    )
+
+
+# ==============================================================================
+# Dashboard, Analytics & History Endpoints
+# ==============================================================================
+@router.get("/dashboard")
+async def get_dashboard_summary(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    user_id = current_user.id
+
     summary_result = await db.execute(
         select(
             func.count(Scan.id).label("total_scans"),
@@ -206,9 +561,11 @@ async def get_dashboard_summary(
 
 @router.get("/analytics")
 async def get_scan_analytics(
-    user_id: int = Depends(get_authenticated_user_id),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    user_id = current_user.id
+
     result = await db.execute(
         select(Scan)
         .where(Scan.user_id == user_id)
@@ -311,56 +668,77 @@ async def get_scan_analytics(
 
 @router.get("/history")
 async def get_scan_history(
-    user_id: int = Depends(get_authenticated_user_id),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    user_id = current_user.id
 
     result = await db.execute(
         select(Scan)
         .where(Scan.user_id == user_id)
-        .order_by(Scan.id.desc())
+        .order_by(Scan.id.asc())
     )
 
     scans = result.scalars().all()
 
+    scan_items = []
+    for index, scan in enumerate(scans, start=1):
+        score = 0
+        risk_lvl = "UNKNOWN"
+        if scan.results:
+            try:
+                parsed = json.loads(scan.results)
+                if isinstance(parsed, dict):
+                    score = parsed.get("security_score", 0)
+                    risk_lvl = parsed.get("risk_level", "UNKNOWN")
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+        scan_items.append({
+            "scan_id": scan.id,
+            "scan_number": index,
+            "language": scan.language,
+            "status": scan.status,
+            "vulnerabilities_found": scan.vulnerabilities_found,
+            "security_score": score,
+            "risk_level": risk_lvl,
+        })
+
     return {
         "user_id": user_id,
         "total_scans": len(scans),
-        "scans": [
-            {
-                "scan_id": scan.id,
-                "language": scan.language,
-                "status": scan.status,
-                "vulnerabilities_found": scan.vulnerabilities_found,
-            }
-            for scan in scans
-        ]
+        "scans": scan_items
     }
 
 
 @router.get("/history/{scan_id}")
 async def get_scan_details(
     scan_id: int,
-    user_id: int = Depends(get_authenticated_user_id),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    user_id = current_user.id
 
     result = await db.execute(
-        select(Scan).where(
-            Scan.id == scan_id,
-            Scan.user_id == user_id
-        )
+        select(Scan)
+        .where(Scan.user_id == user_id)
+        .order_by(Scan.id.asc())
     )
+    scans = result.scalars().all()
 
-    scan = result.scalar_one_or_none()
-
+    scan = next((item for item in scans if item.id == scan_id), None)
     if not scan:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Scan not found"
         )
 
-    parsed_results = json.loads(scan.results)
+    scan_number = scans.index(scan) + 1
+
+    try:
+        parsed_results = json.loads(scan.results)
+    except (json.JSONDecodeError, TypeError):
+        parsed_results = {}
 
     if isinstance(parsed_results, dict):
         findings = parsed_results.get("findings", [])
@@ -368,13 +746,14 @@ async def get_scan_details(
         risk_level = parsed_results.get("risk_level", "UNKNOWN")
         severity_counts = parsed_results.get("severity_counts", {})
     else:
-        findings = parsed_results
+        findings = parsed_results if isinstance(parsed_results, list) else []
         security_score = 0
         risk_level = "UNKNOWN"
         severity_counts = {}
 
     return {
         "scan_id": scan.id,
+        "scan_number": scan_number,
         "user_id": scan.user_id,
         "language": scan.language,
         "code": scan.code,
@@ -387,71 +766,14 @@ async def get_scan_details(
     }
 
 
-@router.post("/python/file")
-async def scan_python_file(
-    file: UploadFile = File(...),
-    user_id: int = Depends(get_authenticated_user_id),
-    db: AsyncSession = Depends(get_db),
-):
-    if not file.filename or not file.filename.lower().endswith(".py"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only Python (.py) files are supported."
-        )
-
-    try:
-        content = await file.read()
-        code = content.decode("utf-8")
-    except UnicodeDecodeError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Unable to read file. Please upload a UTF-8 encoded Python file."
-        )
-
-    scanner = PythonSecurityScanner()
-    result = scanner.scan(code)
-    findings = result.get("findings", [])
-    risk_engine = SecurityRiskEngine()
-    risk = risk_engine.calculate(findings)
-
-    scan = Scan(
-        user_id=user_id,
-        language="python",
-        code=code,
-        status=result["status"],
-        vulnerabilities_found=result.get("vulnerabilities_found", 0),
-        results=json.dumps({
-            "security_score": risk["security_score"],
-            "risk_level": risk["risk_level"],
-            "severity_counts": risk["severity_counts"],
-            "findings": findings
-        })
-    )
-
-    db.add(scan)
-    await db.commit()
-    await db.refresh(scan)
-
-    return {
-        "scan_id": scan.id,
-        "user_id": user_id,
-        "filename": file.filename,
-        "status": result["status"],
-        "language": "python",
-        "vulnerabilities_found": result.get("vulnerabilities_found", 0),
-        "security_score": risk["security_score"],
-        "risk_level": risk["risk_level"],
-        "severity_counts": risk["severity_counts"],
-        "findings": findings
-    }
-
-
 @router.delete("/history/{scan_id}")
 async def delete_scan(
     scan_id: int,
-    user_id: int = Depends(get_authenticated_user_id),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    user_id = current_user.id
+
     result = await db.execute(
         select(Scan).where(
             Scan.id == scan_id,

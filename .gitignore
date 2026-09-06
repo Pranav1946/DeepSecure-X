@@ -1,7 +1,44 @@
+# Environment and secrets
 .env
+.env.*
+!.env.example
+*.key
+*.pem
+*.cert
+
+# Python
 .venv/
+venv/
+ENV/
 __pycache__/
-*.pyc
-.pytest_cache/
-*.db
+*.py[cod]
+*$py.class
 *.sqlite3
+*.db
+*.db-journal
+
+# Testing and caches
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node and Frontend build
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Backups & Temporary
+*.backup
+*.backup.*
+*.bak
+*.tmp
+.claude/
+

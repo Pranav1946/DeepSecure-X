@@ -1,1 +1,13 @@
-aiosqlite==0.22.1bcrypt==5.0.0fastapi==0.141.1httpx==0.28.1pytest==9.1.1python-dotenv==1.2.2python-jose==3.5.0python-multipart==0.0.32SQLAlchemy==2.0.52uvicorn==0.52.3
+aiosqlite==0.22.1
+asyncpg>=0.29.0; sys_platform != "win32"
+bcrypt==5.0.0
+email-validator>=2.1.0
+fastapi==0.141.1
+httpx==0.28.1
+openai==3.3.1
+pytest==9.1.1
+python-dotenv==1.2.2
+python-jose==3.5.0
+python-multipart==0.0.32
+SQLAlchemy==2.0.52
+uvicorn==0.52.3

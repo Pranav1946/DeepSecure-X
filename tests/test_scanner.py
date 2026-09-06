@@ -113,3 +113,57 @@ token = random.randint(1000, 9999)
     result = scanner.scan(code)
 
     assert "INSECURE_RANDOM" in get_rule_ids(result)
+
+
+# ------------------------------------------------------------------------------
+# JavaScript Scanner Tests
+# ------------------------------------------------------------------------------
+
+from app.scanner.javascript_scanner import JavaScriptSecurityScanner
+
+js_scanner = JavaScriptSecurityScanner()
+
+
+def get_js_rule_ids(result):
+    return [finding["rule_id"] for finding in result["findings"]]
+
+
+def test_js_clean_code():
+    code = """
+    function add(a, b) {
+        return a + b;
+    }
+    console.log(add(2, 3));
+    """
+    result = js_scanner.scan(code)
+    assert result["status"] == "completed"
+    assert result["vulnerabilities_found"] == 0
+
+
+def test_js_eval_and_inner_html():
+    code = """
+    eval(userInput);
+    document.getElementById("box").innerHTML = untrustedHTML;
+    """
+    result = js_scanner.scan(code)
+    assert result["status"] == "completed"
+    rule_ids = get_js_rule_ids(result)
+    assert "JS001" in rule_ids  # eval
+    assert "JS003" in rule_ids  # innerHTML
+
+
+def test_js_hardcoded_secret():
+    code = """
+    const apiKey = "api_key_secret_abcdef123456";
+    """
+    result = js_scanner.scan(code)
+    assert "JS007" in get_js_rule_ids(result)
+
+
+def test_js_child_process_command():
+    code = """
+    const { exec } = require('child_process');
+    child_process.exec(userInput);
+    """
+    result = js_scanner.scan(code)
+    assert "JS006" in get_js_rule_ids(result)

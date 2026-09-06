@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import "./Analytics.css";
 
 function Analytics() {
   const navigate = useNavigate();
@@ -39,7 +40,7 @@ function Analytics() {
 
   if (loading) {
     return (
-      <div className="page">
+      <div className="analytics-page">
         <div className="state-block">
           <div className="spinner"></div>
           Loading analytics...
@@ -50,7 +51,7 @@ function Analytics() {
 
   if (error) {
     return (
-      <div className="page">
+      <div className="analytics-page">
         <div className="state-block">
           <div className="state-error-icon">!</div>
           <p>{error}</p>
@@ -63,9 +64,9 @@ function Analytics() {
   }
 
   return (
-    <div className="page">
+    <div className="analytics-page">
 
-      <div className="page-header">
+      <div className="analytics-header">
         <div>
           <span className="page-eyebrow">Insights</span>
           <h1>Security Analytics</h1>
@@ -73,36 +74,36 @@ function Analytics() {
         </div>
       </div>
 
-      <section className="kpi-grid">
-        <div className="kpi-card">
-          <div className="kpi-card-top">
-            <span className="kpi-card-label">Total Scans</span>
+      <section className="analytics-kpi-grid">
+        <div className="analytics-kpi-card">
+          <div className="analytics-kpi-card-top">
+            <span className="analytics-kpi-card-label">Total Scans</span>
           </div>
-          <div className="kpi-card-value">{analytics?.total_scans ?? 0}</div>
+          <div className="analytics-kpi-card-value">{analytics?.total_scans ?? 0}</div>
         </div>
 
-        <div className="kpi-card">
-          <div className="kpi-card-top">
-            <span className="kpi-card-label">Vulnerabilities</span>
+        <div className="analytics-kpi-card">
+          <div className="analytics-kpi-card-top">
+            <span className="analytics-kpi-card-label">Vulnerabilities</span>
           </div>
-          <div className="kpi-card-value">{analytics?.total_vulnerabilities ?? 0}</div>
+          <div className="analytics-kpi-card-value">{analytics?.total_vulnerabilities ?? 0}</div>
         </div>
 
-        <div className="kpi-card">
-          <div className="kpi-card-top">
-            <span className="kpi-card-label">Average Score</span>
+        <div className="analytics-kpi-card">
+          <div className="analytics-kpi-card-top">
+            <span className="analytics-kpi-card-label">Average Score</span>
           </div>
-          <div className="kpi-card-value">
+          <div className="analytics-kpi-card-value">
             {analytics?.average_security_score ?? 0}
             <small>/ 100</small>
           </div>
         </div>
 
-        <div className="kpi-card">
-          <div className="kpi-card-top">
-            <span className="kpi-card-label">High Risk Scans</span>
+        <div className="analytics-kpi-card">
+          <div className="analytics-kpi-card-top">
+            <span className="analytics-kpi-card-label">High Risk Scans</span>
           </div>
-          <div className="kpi-card-value high">
+          <div className="analytics-kpi-card-value high">
             {analytics?.risk_distribution?.HIGH ?? 0}
           </div>
         </div>
@@ -116,20 +117,20 @@ function Analytics() {
           </div>
         </div>
 
-        <div className="severity-grid">
-          <div className="severity-card critical">
+        <div className="analytics-severity-grid">
+          <div className="analytics-severity-card critical">
             <span>CRITICAL</span>
             <strong>{analytics?.severity_counts?.CRITICAL ?? 0}</strong>
           </div>
-          <div className="severity-card high">
+          <div className="analytics-severity-card high">
             <span>HIGH</span>
             <strong>{analytics?.severity_counts?.HIGH ?? 0}</strong>
           </div>
-          <div className="severity-card medium">
+          <div className="analytics-severity-card medium">
             <span>MEDIUM</span>
             <strong>{analytics?.severity_counts?.MEDIUM ?? 0}</strong>
           </div>
-          <div className="severity-card low">
+          <div className="analytics-severity-card low">
             <span>LOW</span>
             <strong>{analytics?.severity_counts?.LOW ?? 0}</strong>
           </div>
@@ -187,7 +188,7 @@ function Analytics() {
 
               {analytics.scan_activity.map((scan) => (
                 <div className="table-row cols-activity" key={scan.scan_id}>
-                  <span className="cell-id">#{scan.scan_id}</span>
+                  <span className="cell-id">#{scan.scan_number ?? scan.scan_id}</span>
                   <span className="cell-primary">{scan.language}</span>
                   <span>
                     <span className={`risk-badge ${(scan.risk_level || "").toLowerCase()}`}>

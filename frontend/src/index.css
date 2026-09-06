@@ -6,38 +6,38 @@
 
 :root {
   /* surfaces */
-  --bg-app: #0a0b0f;
-  --bg-sidebar: #0d0f15;
-  --bg-surface: #12141b;
-  --bg-surface-2: #171a23;
-  --bg-surface-hover: #1c1f2a;
-  --bg-inset: #0a0c11;
+  --bg-app: #050816;
+  --bg-sidebar: rgba(5, 8, 22, 0.94);
+  --bg-surface: rgba(13, 22, 42, 0.82);
+  --bg-surface-2: rgba(22, 33, 59, 0.82);
+  --bg-surface-hover: rgba(30, 45, 78, 0.9);
+  --bg-inset: #030511;
 
   /* borders */
-  --border: #21242f;
-  --border-strong: #2c3040;
-  --border-focus: #6366f1;
+  --border: rgba(153, 178, 224, 0.13);
+  --border-strong: rgba(153, 178, 224, 0.25);
+  --border-focus: #00d4ff;
 
   /* text */
   --text-primary: #f2f3f7;
-  --text-secondary: #9aa1b4;
-  --text-tertiary: #5b6274;
+  --text-secondary: #8a97b0;
+  --text-tertiary: #586781;
 
   /* brand / accent */
-  --accent: #6366f1;
-  --accent-hover: #7476f5;
-  --accent-soft: rgba(99, 102, 241, 0.12);
-  --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  --accent: #00d4ff;
+  --accent-hover: #55e5ff;
+  --accent-soft: rgba(0, 212, 255, 0.12);
+  --accent-gradient: linear-gradient(135deg, #00d4ff 0%, #5865f2 100%);
 
   /* severity */
-  --critical: #ef4444;
-  --critical-soft: rgba(239, 68, 68, 0.12);
-  --high: #f97316;
-  --high-soft: rgba(249, 115, 22, 0.12);
-  --medium: #f59e0b;
-  --medium-soft: rgba(245, 158, 11, 0.12);
-  --low: #22c55e;
-  --low-soft: rgba(34, 197, 94, 0.12);
+  --critical: #ff2d78;
+  --critical-soft: rgba(255, 45, 120, 0.12);
+  --high: #ff6b35;
+  --high-soft: rgba(255, 107, 53, 0.12);
+  --medium: #ffd60a;
+  --medium-soft: rgba(255, 214, 10, 0.1);
+  --low: #00e676;
+  --low-soft: rgba(0, 230, 118, 0.1);
   --unknown: #64748b;
   --unknown-soft: rgba(100, 116, 139, 0.12);
 

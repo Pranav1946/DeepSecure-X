@@ -1,0 +1,106 @@
+/* ============================================================
+   DeepSecure-X Design System — Global CSS Variables & Tokens
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* ── Background ── */
+  --bg-primary:   #050816;
+  --bg-secondary: #070b18;
+  --bg-tertiary:  #0a1020;
+
+  /* ── Surface (cards, panels) ── */
+  --surface:       rgba(255, 255, 255, 0.03);
+  --surface-hover: rgba(255, 255, 255, 0.055);
+  --surface-active:rgba(255, 255, 255, 0.08);
+
+  /* ── Borders ── */
+  --border:        rgba(255, 255, 255, 0.08);
+  --border-hover:  rgba(255, 255, 255, 0.14);
+  --border-active: rgba(0, 212, 255, 0.35);
+
+  /* ── Brand / Primary ── */
+  --primary:       #00d4ff;
+  --primary-dim:   rgba(0, 212, 255, 0.12);
+  --primary-glow:  rgba(0, 212, 255, 0.25);
+
+  /* ── Secondary / Accent ── */
+  --secondary:     #7c3aed;
+  --secondary-dim: rgba(124, 58, 237, 0.15);
+  --secondary-glow:rgba(124, 58, 237, 0.30);
+
+  /* ── Semantic ── */
+  --critical:      #ff2d78;
+  --critical-dim:  rgba(255, 45, 120, 0.12);
+  --critical-glow: rgba(255, 45, 120, 0.30);
+
+  --high:          #ff6b35;
+  --high-dim:      rgba(255, 107, 53, 0.12);
+  --high-glow:     rgba(255, 107, 53, 0.28);
+
+  --medium:        #ffd60a;
+  --medium-dim:    rgba(255, 214, 10, 0.10);
+  --medium-glow:   rgba(255, 214, 10, 0.25);
+
+  --low:           #00e676;
+  --low-dim:       rgba(0, 230, 118, 0.10);
+  --low-glow:      rgba(0, 230, 118, 0.25);
+
+  /* ── Text ── */
+  --text-primary:   #e8edf5;
+  --text-secondary: #8a97b0;
+  --muted:          #4a5568;
+
+  /* ── Sidebar ── */
+  --sidebar-bg:     rgba(5, 8, 22, 0.92);
+  --sidebar-width:  240px;
+
+  /* ── Radius ── */
+  --radius-sm: 6px;
+  --radius:    10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+  --shadow:    0 4px 16px rgba(0,0,0,0.5);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
+  --shadow-primary: 0 0 24px rgba(0,212,255,0.15);
+  --shadow-critical: 0 0 24px rgba(255,45,120,0.15);
+
+  /* ── Typography ── */
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* ── Transitions ── */
+  --transition: 0.18s ease;
+  --transition-slow: 0.30s ease;
+}
+
+/* ── Base Reset ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }

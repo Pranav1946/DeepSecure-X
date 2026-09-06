@@ -2,53 +2,66 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 
-function Login() {
+function Register() {
   const navigate = useNavigate();
 
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(
-    localStorage.getItem("remember_me") === "true"
-  );
+  const [confirmPassword, setConfirmPassword] = useState("");
+
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (event) => {
+  const handleRegister = async (event) => {
     event.preventDefault();
 
-    if (!username || !password) {
-      setError("Please enter username and password.");
+    setError("");
+    setSuccess("");
+
+    if (!username || !email || !password || !confirmPassword) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    if (username.length < 3) {
+      setError("Username must contain at least 3 characters.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must contain at least 8 characters.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
       return;
     }
 
     try {
       setLoading(true);
-      setError("");
 
-      const response = await api.post("/auth/login", {
+      await api.post("/auth/register", {
         username,
+        email,
         password,
       });
 
-      const token = response.data.access_token;
+      setSuccess(
+        "Account created successfully. Redirecting to login..."
+      );
 
-      if (rememberMe) {
-        localStorage.setItem("access_token", token);
-        localStorage.setItem("remember_me", "true");
-        sessionStorage.removeItem("access_token");
-      } else {
-        sessionStorage.setItem("access_token", token);
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("remember_me");
-      }
-
-      navigate("/dashboard");
+      setTimeout(() => {
+        navigate("/login");
+      }, 1500);
     } catch (err) {
-      console.error("Login error:", err);
+      console.error("Registration error:", err);
 
       setError(
         err.response?.data?.detail ||
-          "Invalid username or password."
+          "Unable to create account."
       );
     } finally {
       setLoading(false);
@@ -72,18 +85,15 @@ function Login() {
         <span></span>
       </div>
 
-      {/* MAIN CONTENT */}
       <div className="login-container">
 
         {/* BRAND */}
         <div className="login-brand">
 
           <div className="brand-shield">
-
             <div className="shield-shape">
-              <span className="shield-lock" aria-hidden="true">DS</span>
+              <span className="shield-lock">🔒</span>
             </div>
-
           </div>
 
           <h1>
@@ -101,46 +111,74 @@ function Login() {
 
         </div>
 
-        {/* LOGIN CARD */}
+        {/* REGISTER CARD */}
         <div className="login-card">
 
           <div className="login-heading">
 
-            <h2>Welcome Back</h2>
+            <h2>Create Account</h2>
 
             <p>
-              Sign in to access your security dashboard
+              Create your DeepSecure-X security account
             </p>
 
           </div>
 
           <form
             className="login-form"
-            onSubmit={handleLogin}
+            onSubmit={handleRegister}
           >
 
             {/* USERNAME */}
             <div className="form-group">
 
-              <label htmlFor="username">
+              <label htmlFor="register-username">
                 Username
               </label>
 
               <div className="input-wrapper">
 
                 <span className="input-icon">
-                  ID
+                  👤
                 </span>
 
                 <input
-                  id="username"
+                  id="register-username"
                   type="text"
                   value={username}
                   onChange={(e) =>
                     setUsername(e.target.value)
                   }
-                  placeholder="Enter your username"
+                  placeholder="Choose a username"
                   autoComplete="username"
+                />
+
+              </div>
+
+            </div>
+
+            {/* EMAIL */}
+            <div className="form-group">
+
+              <label htmlFor="register-email">
+                Email Address
+              </label>
+
+              <div className="input-wrapper">
+
+                <span className="input-icon">
+                  ✉
+                </span>
+
+                <input
+                  id="register-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) =>
+                    setEmail(e.target.value)
+                  }
+                  placeholder="Enter your email"
+                  autoComplete="email"
                 />
 
               </div>
@@ -150,57 +188,56 @@ function Login() {
             {/* PASSWORD */}
             <div className="form-group">
 
-              <label htmlFor="password">
+              <label htmlFor="register-password">
                 Password
               </label>
 
               <div className="input-wrapper">
 
                 <span className="input-icon">
-                  KEY
+                  🔒
                 </span>
 
                 <input
-                  id="password"
+                  id="register-password"
                   type="password"
                   value={password}
                   onChange={(e) =>
                     setPassword(e.target.value)
                   }
-                  placeholder="Enter your password"
-                  autoComplete="current-password"
+                  placeholder="Create a password"
+                  autoComplete="new-password"
                 />
 
               </div>
 
             </div>
 
-            {/* OPTIONS */}
-            <div className="login-options">
+            {/* CONFIRM PASSWORD */}
+            <div className="form-group">
 
-              <label className="remember-me">
-
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) =>
-                    setRememberMe(e.target.checked)
-                  }
-                />
-
-                <span className="custom-checkbox"></span>
-
-                <span>Remember me</span>
-
+              <label htmlFor="confirm-password">
+                Confirm Password
               </label>
 
-              <button
-                type="button"
-                className="forgot-password"
-                onClick={() => navigate("/forgot-password")}
-              >
-                Forgot password?
-              </button>
+              <div className="input-wrapper">
+
+                <span className="input-icon">
+                  🔒
+                </span>
+
+                <input
+                  id="confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) =>
+                    setConfirmPassword(e.target.value)
+                  }
+                  placeholder="Confirm your password"
+                  autoComplete="new-password"
+                />
+
+              </div>
 
             </div>
 
@@ -211,7 +248,14 @@ function Login() {
               </div>
             )}
 
-            {/* SIGN IN */}
+            {/* SUCCESS */}
+            {success && (
+              <div className="login-success">
+                ✓ {success}
+              </div>
+            )}
+
+            {/* REGISTER BUTTON */}
             <button
               type="submit"
               className="login-submit"
@@ -220,30 +264,32 @@ function Login() {
               {loading ? (
                 <>
                   <span className="button-spinner"></span>
-                  Signing in...
+                  Creating account...
                 </>
               ) : (
                 <>
-                  Sign In
-                  <span className="button-arrow">→</span>
+                  Create Account
+                  <span className="button-arrow">
+                    →
+                  </span>
                 </>
               )}
             </button>
 
           </form>
 
-          {/* CREATE ACCOUNT */}
+          {/* LOGIN LINK */}
           <div className="login-footer">
 
             <span>
-              Don't have an account?
+              Already have an account?
             </span>
 
             <button
               type="button"
-              onClick={() => navigate("/register")}
+              onClick={() => navigate("/login")}
             >
-              Create account
+              Sign in
             </button>
 
           </div>
@@ -269,7 +315,6 @@ function Login() {
 
       </div>
 
-      {/* BACKGROUND SHIELD */}
       <div className="background-shield">
         ◈
       </div>
@@ -278,4 +323,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default Register;

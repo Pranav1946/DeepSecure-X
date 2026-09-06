@@ -5,6 +5,7 @@ import api from "../services/api";
 function Scanner() {
   const navigate = useNavigate();
 
+  const [language, setLanguage] = useState("python");
   const [mode, setMode] = useState("paste");
   const [code, setCode] = useState("");
   const [result, setResult] = useState(null);
@@ -12,9 +13,27 @@ function Scanner() {
   const [error, setError] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
 
+  const pythonPlaceholder = `Example Python:
+
+import os
+
+password = "SuperSecret123"
+
+username = input("Username: ")
+
+os.system("ping " + username)`;
+
+  const javascriptPlaceholder = `Example JavaScript:
+
+const secretKey = "api_key_secret_12345";
+
+eval(userInput);
+
+document.getElementById("output").innerHTML = untrustedInput;`;
+
   const scanCode = async () => {
     if (!code.trim()) {
-      setError("Please enter Python code before scanning.");
+      setError(`Please enter ${language === "python" ? "Python" : "JavaScript"} source code before scanning.`);
       return;
     }
 
@@ -23,8 +42,9 @@ function Scanner() {
       setError("");
       setResult(null);
 
-      const response = await api.post("/scanner/python", {
+      const response = await api.post("/scanner/scan", {
         code,
+        language,
       });
 
       setResult(response.data);
@@ -48,12 +68,16 @@ function Scanner() {
 
   const scanFile = async () => {
     if (!selectedFile) {
-      setError("Please select a Python file before scanning.");
+      setError("Please select a file before scanning.");
       return;
     }
 
-    if (!selectedFile.name.toLowerCase().endsWith(".py")) {
-      setError("Only Python (.py) files are supported.");
+    const fileName = selectedFile.name.toLowerCase();
+    const isPy = fileName.endsWith(".py");
+    const isJs = fileName.endsWith(".js") || fileName.endsWith(".jsx") || fileName.endsWith(".mjs");
+
+    if (!isPy && !isJs) {
+      setError("Unsupported file type. Only Python (.py) and JavaScript (.js, .jsx, .mjs) files are supported.");
       return;
     }
 
@@ -65,7 +89,7 @@ function Scanner() {
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      const response = await api.post("/scanner/python/file", formData);
+      const response = await api.post("/scanner/file", formData);
       setResult(response.data);
     } catch (err) {
       console.error("File scanner error:", err);
@@ -78,7 +102,7 @@ function Scanner() {
 
       setError(
         err.response?.data?.detail ||
-          "Unable to analyze the Python file."
+          "Unable to analyze the uploaded file."
       );
     } finally {
       setLoading(false);
@@ -94,7 +118,6 @@ function Scanner() {
 
   const getRiskClass = (risk) => {
     if (!risk) return "";
-
     return risk.toLowerCase();
   };
 
@@ -105,10 +128,9 @@ function Scanner() {
       <div className="page-header">
         <div>
           <span className="page-eyebrow">Static Code Analysis</span>
-          <h1>Python Security Scanner</h1>
+          <h1>Security Code Scanner</h1>
           <p>
-            Analyze Python source code for security vulnerabilities and
-            receive actionable remediation recommendations.
+            Analyze source code for security vulnerabilities, secrets, and dangerous APIs with actionable remediation recommendations.
           </p>
         </div>
       </div>
@@ -119,35 +141,74 @@ function Scanner() {
         <div className="section-header">
           <div>
             <h2>Source Code</h2>
-            <p>Paste code or upload a file for security analysis.</p>
+            <p>Paste code or upload a file for static security analysis.</p>
           </div>
-          <span className="language-badge">PYTHON</span>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <span className="language-badge" style={{ textTransform: "uppercase" }}>
+              {language}
+            </span>
+          </div>
         </div>
 
         <div className="mode-toggle">
           <button
             type="button"
             className={mode === "paste" ? "active" : ""}
-            onClick={() => setMode("paste")}
+            onClick={() => {
+              setMode("paste");
+              setError("");
+            }}
           >
             Paste Code
           </button>
           <button
             type="button"
             className={mode === "upload" ? "active" : ""}
-            onClick={() => setMode("upload")}
+            onClick={() => {
+              setMode("upload");
+              setError("");
+            }}
           >
             Upload File
           </button>
+        </div>
+
+        {/* LANGUAGE SELECTOR */}
+        <div style={{ display: "flex", gap: "8px", marginBottom: "16px", flexWrap: "wrap" }}>
+          {[
+            ["python", "Python (.py)"],
+            ["javascript", "JavaScript (.js)"],
+            ["c", "C (.c)"],
+            ["cpp", "C++ (.cpp)"],
+            ["java", "Java (.java)"],
+            ["html", "HTML (.html)"],
+            ["css", "CSS (.css)"],
+          ].map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              className={`btn btn-sm ${
+                language === value ? "btn-primary" : "btn-secondary"
+              }`}
+              onClick={() => {
+                setLanguage(value);
+                setError("");
+                setCode("");
+                setResult(null);
+              }}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         {mode === "upload" ? (
           <div className="file-upload-section">
             <div className="file-drop">
               <input
-                id="python-file"
+                id="source-file"
                 type="file"
-                accept=".py"
+                accept=".py,.js,.jsx,.mjs"
                 onChange={(event) => {
                   setSelectedFile(event.target.files?.[0] || null);
                   setError("");
@@ -155,9 +216,9 @@ function Scanner() {
                 disabled={loading}
               />
               <div className="file-drop-label">
-                Drop a Python file here, or click to browse
+                Drop a Python or JavaScript file here, or click to browse
               </div>
-              <div className="file-drop-hint">Supports .py files</div>
+              <div className="file-drop-hint">Supports .py, .js, .jsx, .mjs files (Max 2MB)</div>
             </div>
 
             {selectedFile && (
@@ -168,7 +229,7 @@ function Scanner() {
 
             <div className="scanner-footer">
               <span className="code-hint">
-                Security analysis is performed by DeepSecure-X
+                Static security analysis is performed safely as data (code is never executed)
               </span>
 
               <div className="scanner-buttons">
@@ -195,22 +256,17 @@ function Scanner() {
             <textarea
               className="code-editor"
               value={code}
-              onChange={(event) => setCode(event.target.value)}
-              placeholder={`Example:
-
-import os
-
-password = "SuperSecret123"
-
-username = input("Username: ")
-
-os.system("ping " + username)`}
+              onChange={(event) => {
+                setCode(event.target.value);
+                if (error) setError("");
+              }}
+              placeholder={language === "python" ? pythonPlaceholder : javascriptPlaceholder}
               spellCheck="false"
             />
 
             <div className="scanner-footer">
               <span className="code-hint">
-                Security analysis is performed by DeepSecure-X
+                Static security analysis is performed safely as data (code is never executed)
               </span>
 
               <div className="scanner-buttons">
@@ -234,7 +290,12 @@ os.system("ping " + username)`}
           </>
         )}
 
-        {error && <div className="scanner-error">{error}</div>}
+        {error && (
+          <div className="scanner-error" style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "12px" }}>
+            <span>⚠</span>
+            <span>{error}</span>
+          </div>
+        )}
 
       </section>
 
@@ -248,8 +309,9 @@ os.system("ping " + username)`}
               <h2 style={{ margin: 0, fontSize: 19, fontWeight: 700 }}>
                 Security Report
               </h2>
-              <p style={{ margin: "6px 0 0", color: "var(--text-tertiary)", fontSize: 13 }}>
-                Scan #{result.scan_id} · Python
+              <p style={{ margin: "6px 0 0", color: "var(--text-tertiary)", fontSize: 13, textTransform: "capitalize" }}>
+                Scan #{result.scan_id} · {result.language}
+                {result.filename ? ` · ${result.filename}` : ""}
               </p>
             </div>
 
@@ -294,7 +356,7 @@ os.system("ping " + username)`}
               <div className="secure-icon">✓</div>
               <div>
                 <h3>No vulnerabilities detected</h3>
-                <p>The analyzed code passed the current security rules.</p>
+                <p>The analyzed code passed all static security rules for {result.language}.</p>
               </div>
             </div>
           ) : (
@@ -307,7 +369,7 @@ os.system("ping " + username)`}
                   <div className="finding-top">
                     <div>
                       <span className="severity-label">{finding.severity}</span>
-                      <h4>{finding.rule_id}</h4>
+                      <h4>{finding.rule_id || finding.name}</h4>
                     </div>
                     <span className="line-number">Line {finding.line}</span>
                   </div>
@@ -316,7 +378,7 @@ os.system("ping " + username)`}
 
                   <div className="finding-detail">
                     <strong>Evidence</strong>
-                    <code>{finding.evidence}</code>
+                    <code>{finding.evidence || finding.code}</code>
                   </div>
 
                   <div className="finding-detail">

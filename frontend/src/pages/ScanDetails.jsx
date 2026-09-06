@@ -9,6 +9,9 @@ function ScanDetails() {
   const [scan, setScan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
 
   useEffect(() => {
     const loadScan = async () => {
@@ -41,6 +44,36 @@ function ScanDetails() {
 
     loadScan();
   }, [scanId, navigate]);
+
+  const analyzeWithAI = async () => {
+    try {
+      setAiLoading(true);
+      setAiError("");
+
+      const response = await api.post("/ai/analyze", {
+        scan_id: Number(scanId),
+      });
+
+      setAiAnalysis(response.data?.analysis || null);
+    } catch (err) {
+      console.error("AI analysis error:", err);
+
+      if (err.response?.status === 401) {
+        localStorage.removeItem("access_token");
+        sessionStorage.removeItem("access_token");
+        navigate("/login");
+        return;
+      }
+
+      setAiError(
+        err.response?.data?.detail ||
+          "Unable to generate AI security analysis."
+          
+      );
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const deleteScan = async () => {
     const confirmed = window.confirm(
@@ -138,7 +171,7 @@ function ScanDetails() {
           </span>
 
           <h1>
-            Scan #{scan.scan_id}
+            Scan #{scan.scan_number ?? scan.scan_id}
           </h1>
 
           <p>
@@ -405,6 +438,157 @@ function ScanDetails() {
 
 
       {/* =====================================
+          AI SECURITY ANALYSIS
+      ====================================== */}
+
+      <section className="section scan-section ai-analysis-section">
+
+        <div className="section-header">
+          <div>
+            <span className="section-kicker">
+              AI SECURITY REVIEW
+            </span>
+
+            <h2>
+              Intelligent Analysis
+            </h2>
+
+            <p>
+              Get a prioritized explanation and remediation plan for this scan.
+            </p>
+          </div>
+
+          <button
+            className="btn btn-primary"
+            onClick={analyzeWithAI}
+            disabled={aiLoading}
+          >
+            {aiLoading ? "Analyzing..." : "Analyze with AI"}
+          </button>
+        </div>
+
+        {aiError && (
+          <div className="state-error-icon">
+            {aiError}
+          </div>
+        )}
+
+        {aiAnalysis && (
+          <div className="ai-analysis-content">
+            <article className="ai-summary-card">
+              <div className="ai-card-heading">
+                <div>
+                  <span className="ai-card-label">
+                    EXECUTIVE SUMMARY
+                  </span>
+                  <h3>
+                    AI Security Assessment
+                  </h3>
+                </div>
+                <span
+                  className={`severity-label ${getRiskClass(
+                    aiAnalysis.overall_risk
+                  )}`}
+                >
+                  {aiAnalysis.overall_risk || "UNKNOWN"}
+                </span>
+              </div>
+              <p>
+                {aiAnalysis.summary}
+              </p>
+            </article>
+
+            <div className="ai-remediation-card">
+              <div className="ai-card-heading">
+                <div>
+                  <span className="ai-card-label">
+                    PRIORITIZED REMEDIATION
+                  </span>
+                  <h3>
+                    Recommended Actions
+                  </h3>
+                </div>
+              </div>
+
+              {aiAnalysis.prioritized_remediation?.length > 0 ? (
+                <div className="ai-remediation-list">
+                  {aiAnalysis.prioritized_remediation.map(
+                    (item, index) => (
+                      <article
+                        className="ai-remediation-item"
+                        key={`${item.rule_id || "remediation"}-${index}`}
+                      >
+                        <div className="ai-remediation-priority">
+                          {item.priority || index + 1}
+                        </div>
+                        <div>
+                          <h4>{item.rule_id}</h4>
+                          <p>{item.explanation}</p>
+                          {item.remediation_steps?.length > 0 && (
+                            <ol>
+                              {item.remediation_steps.map(
+                                (step, stepIndex) => (
+                                  <li key={stepIndex}>
+                                    {step}
+                                  </li>
+                                )
+                              )}
+                            </ol>
+                          )}
+                        </div>
+                      </article>
+                    )
+                  )}
+                </div>
+              ) : (
+                <p className="ai-empty">
+                  No prioritized remediation actions returned.
+                </p>
+              )}
+            </div>
+
+            {/* SECURE PRACTICES */}
+            <div className="ai-practices-card">
+              <div className="ai-card-heading">
+                <div>
+                  <span className="ai-card-label">
+                    SECURITY HARDENING
+                  </span>
+                  <h3>
+                    Secure Practices
+                  </h3>
+                </div>
+                <span className="ai-practice-icon">
+                  ✓
+                </span>
+              </div>
+              {aiAnalysis.secure_practices?.length > 0 ? (
+                <div className="ai-practices-grid">
+                  {aiAnalysis.secure_practices.map(
+                    (practice, index) => (
+                      <div
+                        className="ai-practice-item"
+                        key={index}
+                      >
+                        <span>✓</span>
+                        <p>{practice}</p>
+                      </div>
+                    )
+                  )}
+                </div>
+              ) : (
+                <p className="ai-empty">
+                  No additional secure practices returned.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+      </section>
+
+
+      {/* =====================================
           FINDINGS
       ====================================== */}
 
@@ -474,6 +658,7 @@ function ScanDetails() {
                   <div className="premium-finding-content">
 
                     <div className="premium-finding-header">
+
 
                       <div>
                         <span
@@ -557,12 +742,12 @@ function ScanDetails() {
             </h2>
 
             <p>
-              Python source code analyzed by the DeepSecure-X engine.
+              Source code analyzed by the DeepSecure-X engine.
             </p>
           </div>
 
-          <span className="language-badge">
-            PYTHON
+          <span className="language-badge" style={{ textTransform: "uppercase" }}>
+            {scan.language || "SOURCE"}
           </span>
         </div>
 
@@ -578,7 +763,7 @@ function ScanDetails() {
             </div>
 
             <span>
-              scan_{scan.scan_id}.py
+              scan_{scan.scan_id}.{scan.language === "javascript" ? "js" : "py"}
             </span>
 
             <span className="code-status">
@@ -586,6 +771,7 @@ function ScanDetails() {
             </span>
 
           </div>
+
 
           <pre className="code-preview">
             {scan.code}
